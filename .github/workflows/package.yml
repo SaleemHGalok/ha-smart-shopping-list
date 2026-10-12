@@ -1,0 +1,19 @@
+name: Release artifacts
+on:
+  workflow_dispatch:
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm run build
+      - run: cd custom_components && zip -r ../smart_shopping_list.zip smart_shopping_list
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smart-shopping-list
+          path: |
+            smart_shopping_list.zip
+            frontend/dist/smart-shopping-card.js
