@@ -37,6 +37,16 @@ title: Purchase history
 mode: history
 ```
 
+For a single card that switches between management and shopping, use:
+
+```yaml
+type: custom:smart-shopping-card
+title: Shopping list
+mode: multi
+```
+
+Multi mode starts in Manage. Tap **Store mode** to shop, then **Back to manage mode** to manage items again. The selected view belongs to that card instance; changing views does not change other cards or devices. Recreating the card (such as refreshing the page) starts in Manage again. Multi mode includes no history view; keep a separate `mode: history` card if needed. Fixed `manage`, `store`, and `history` cards continue working as before and have no mode switch button.
+
 `mode` defaults to `manage`; `title` is optional. The card appears in the card picker and supports the standard YAML editor.
 
 Management provides Add Item, quantity-only edits and confirmed permanent deletion. Store mode has a touch-friendly Got It button and removes an item after the server confirms persistence. History retains purchased items and lets you restore them. **Clear History** permanently deletes all purchased items after confirmation, keeps active items, and synchronizes the change across devices. A restored item keeps its original creation time and clears its purchase timestamp. Duplicate names are allowed; UUIDs identify items.
