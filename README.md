@@ -8,7 +8,10 @@ Target: Home Assistant **2026.10.1**, Python **3.14.2+**, modern Home Assistant 
 
 ### HACS
 
-Add `https://github.com/SaleemHGalok/ha-smart-shopping-list` as a **custom repository**, category **Integration**, then download Smart Shopping List and restart Home Assistant. This repository bundles the generated frontend inside the integration; no separate HACS frontend repository is required. HACS default-store inclusion and automated validation have not been confirmed.
+The GitHub repository must be public: HACS cannot install private repositories. Set its About description to "Shared Home Assistant shopping list with management, store and history Lovelace views" and add topics such as `home-assistant`, `hacs`, `custom-integration`, and `lovelace`. GitHub recognizes the included MIT license once it is on the default branch. Local brand icons are bundled in `brand/`.
+
+
+Add `https://github.com/SaleemHGalok/ha-smart-shopping-list` as a **custom repository**, category **Integration**, then download Smart Shopping List and restart Home Assistant. This repository bundles the generated frontend inside the integration; no separate HACS frontend repository is required. HACS default-store inclusion has not been confirmed. CI runs HACS validation only for public repositories; private repositories still run backend, frontend, hassfest, JSON and Compose checks. Publication metadata checks can still fail before the initial license reaches the default branch.
 
 ### Manual
 
