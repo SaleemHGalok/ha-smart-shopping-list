@@ -65,7 +65,7 @@ export class SmartShoppingCard extends HTMLElement {
       .overlay{position:fixed;inset:0;z-index:1000;background:#0008;display:grid;place-items:center;padding:16px}.modal{box-sizing:border-box;background:var(--card-background-color);border-radius:16px;padding:24px;width:min(100%,400px);max-height:90vh;overflow:auto}
       label{display:block;margin:16px 0}input{display:block;box-sizing:border-box;width:100%;margin-top:6px;padding:12px;border:1px solid var(--divider-color);border-radius:8px;color:var(--primary-text-color);background:var(--secondary-background-color)}footer{display:flex;gap:8px;justify-content:flex-end}
       @media(max-width:420px){li{flex-wrap:wrap}.actions{margin-inline-start:auto}ha-card{padding:12px}}
-    </style><ha-card><header>${mode === 'manage' ? '<button class="primary" data-action="add">＋ Add Item</button>' : ''}<h2>${escape(this.config.title ?? ({manage:'Shopping list',store:'At the store',history:'Purchase history'}[mode]))}</h2></header>
+    </style><ha-card><header>${mode === 'manage' ? '<button class="primary" data-action="add">＋ Add Item</button>' : ''}<h2>${escape(this.config.title ?? ({manage:'Shopping list',store:'At the store',history:'Purchase history'}[mode]))}</h2>${mode === 'history' && items.length && !this.loading ? '<button data-action="clear-history">Clear History</button>' : ''}</header>
     ${this.error ? `<p class="error" role="alert">${escape(this.error)}</p><button data-action="retry">Retry connection</button>` : ''}
     ${this.loading ? '<p class="muted" role="status">Loading shopping list…</p>' : !items.length ? `<p class="muted">${mode === 'history' ? 'No purchased items yet.' : 'Your shopping list is empty.'}</p>` : `<ul>${items.map(i => `<li><div class="description">${escape(i.name)}<span class="quantity">${escape(i.quantity)} ${escape(i.unit)}${mode === 'history' && i.purchased_at ? ` · ${escape(new Date(i.purchased_at).toLocaleString())}` : ''}</span></div><div class="actions">${mode === 'manage' ? `<button data-action="edit" data-id="${escape(i.id)}" aria-label="Edit quantity for ${escape(i.name)}">Edit</button><button data-action="delete" data-id="${escape(i.id)}" aria-label="Delete ${escape(i.name)}">Delete</button>` : `<button class="primary" data-action="${mode === 'store' ? 'purchase' : 'restore'}" data-id="${escape(i.id)}">${mode === 'store' ? 'Got It' : 'Restore'}</button>`}</div></li>`).join('')}</ul>`}
     ${this.dialog ? this.renderDialog() : ''}</ha-card>`;
@@ -95,12 +95,16 @@ export class SmartShoppingCard extends HTMLElement {
   }
   renderDialog() {
     const {action, item, draft = {}} = this.dialog;
+    if (action === 'clear-history') {
+      return `<div class="overlay"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><h2 id="dialog-title">Clear history?</h2><p>Permanently delete all purchased items? Active shopping items will be kept. This cannot be undone.</p>${this.error ? `<p class="error" role="alert">${escape(this.error)}</p>` : ''}<footer><button data-action="cancel">Cancel</button><button class="primary" data-action="confirm-clear-history">Clear History</button></footer></section></div>`;
+    }
     return `<div class="overlay"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="dialog-title">${this.error ? `<p class="error" role="alert">${escape(this.error)}</p>` : ''}<h2 id="dialog-title">${action === 'add' ? 'Add item' : action === 'edit' ? 'Edit quantity' : 'Delete item?'}</h2>${action === 'delete' ? `<p>Permanently delete ${escape(item.name)}?</p><footer><button data-action="cancel">Cancel</button><button class="primary" data-action="confirm-delete" data-id="${escape(item.id)}">Delete</button></footer>` : `<form>${action === 'add' ? `<label>Item name<input name="name" maxlength="200" required value="${escape(draft.name)}"></label>` : `<p>${escape(item.name)}</p>`}<label>Quantity<input name="quantity" type="number" min="5e-324" step="any" required value="${escape(draft.quantity ?? item?.quantity ?? 1)}"></label>${action === 'add' ? `<label>Unit (optional)<input name="unit" maxlength="40" value="${escape(draft.unit)}"></label>` : ''}<footer><button type="button" data-action="cancel">Cancel</button><button class="primary" type="submit" ${this.pending ? 'disabled' : ''}>${action === 'add' ? 'Add' : 'Save'}</button></footer></form>`}</section></div>`;
   }
   handle(action, id) {
     if (action === 'retry') { this.disconnect(); this.connect(); return; }
     if (action === 'cancel') { this.dialog = undefined; this.render(); return; }
-    if (['add','edit','delete'].includes(action)) {
+    if (action === 'confirm-clear-history') { this.command('clear_history'); return; }
+    if (['add','edit','delete','clear-history'].includes(action)) {
       this.dialog = {action, item:this.items.find(i => i.id === id)}; this.render();
       this.shadowRoot.querySelector('.modal input,.modal button')?.focus(); return;
     }

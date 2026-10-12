@@ -39,7 +39,7 @@ mode: history
 
 `mode` defaults to `manage`; `title` is optional. The card appears in the card picker and supports the standard YAML editor.
 
-Management provides Add Item, quantity-only edits and confirmed permanent deletion. Store mode has a touch-friendly Got It button and removes an item after the server confirms persistence. History retains purchased items and lets you restore them. A restored item keeps its original creation time and clears its purchase timestamp. Duplicate names are allowed; UUIDs identify items.
+Management provides Add Item, quantity-only edits and confirmed permanent deletion. Store mode has a touch-friendly Got It button and removes an item after the server confirms persistence. History retains purchased items and lets you restore them. **Clear History** permanently deletes all purchased items after confirmation, keeps active items, and synchronizes the change across devices. A restored item keeps its original creation time and clears its purchase timestamp. Duplicate names are allowed; UUIDs identify items.
 
 ## Windows development with Docker Desktop and VS Code
 
@@ -102,6 +102,7 @@ await hass.callWS({type: 'smart_shopping_list/command', action: 'purchase', item
 await hass.callWS({type: 'smart_shopping_list/command', action: 'restore', item_id: id});
 await hass.callWS({type: 'smart_shopping_list/command', action: 'delete', item_id: id});
 await hass.callWS({type: 'smart_shopping_list/command', action: 'get'});
+await hass.callWS({type: 'smart_shopping_list/command', action: 'clear_history'});
 const unsubscribe = await hass.connection.subscribeMessage(snapshot => console.log(snapshot), {
   type: 'smart_shopping_list/subscribe'
 });

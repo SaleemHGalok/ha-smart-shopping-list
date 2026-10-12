@@ -104,7 +104,11 @@ class ShoppingStore:
                 raise ValueError("Shopping list was unloaded; reconnect and retry")
             items = deepcopy(self.items)
             now = dt_util.utcnow().isoformat()
-            if action == "add":
+            if action == "clear_history":
+                items = [item for item in items if not item["purchased"]]
+                if len(items) == len(self.items):
+                    return self.snapshot()
+            elif action == "add":
                 items.append({"id": str(uuid4()), "name": clean_text(values["name"], 200),
                               "quantity": quantity(values["quantity"]),
                               "unit": clean_text(values.get("unit"), 40, True),
