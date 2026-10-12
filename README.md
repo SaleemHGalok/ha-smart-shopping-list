@@ -1,30 +1,80 @@
 # Smart Shopping List
 
-A standalone Home Assistant custom integration and Lovelace card. One shared household list has management, store and purchase history views. No third-party cards, cloud services or access tokens are needed.
+A shared shopping list for Home Assistant, with a custom dashboard card for planning at home and checking off items at the store. Add an item on one device and see it update on your other dashboards.
 
-Target: Home Assistant **2026.10.1**, Python **3.14.2+**, modern Home Assistant browsers, Node.js **24** for frontend development. CI pins the matching Home Assistant fixture release. Docker uses the requested moving `stable` image; verify upgrades before using them on your main instance.
+- Add items with a quantity and optional unit.
+- Edit quantities and delete items with confirmation.
+- Tap **Got It** while shopping to move an item into purchase history.
+- Restore purchased items or clear history with confirmation.
+- Use separate cards for each view, or switch between Manage and Store in one card.
+- Fits phone, tablet and desktop dashboards, with Home Assistant light/dark theme support.
 
-## Install
+## Before you start
 
-### HACS
+You need **Home Assistant 2026.10.1 or newer** and **HACS** installed. The integration and card are included in one download. No build tools or additional custom cards are required.
 
-The GitHub repository must be public: HACS cannot install private repositories. Set its About description to "Shared Home Assistant shopping list with management, store and history Lovelace views" and add topics such as `home-assistant`, `hacs`, `custom-integration`, and `lovelace`. GitHub recognizes the included MIT license once it is on the default branch. Local brand icons are bundled in `brand/`.
+## Install with HACS
 
+1. Open **HACS** in Home Assistant.
+2. Select **⋮ → Custom repositories**.
+3. Enter `https://github.com/SaleemHGalok/ha-smart-shopping-list`.
+4. Choose **Integration** as the type, then select **Add**.
+5. Find **Smart Shopping List** in HACS and download it.
+6. **Restart Home Assistant**.
 
-Add `https://github.com/SaleemHGalok/ha-smart-shopping-list` as a **custom repository**, category **Integration**, then download Smart Shopping List and restart Home Assistant. This repository bundles the generated frontend inside the integration; no separate HACS frontend repository is required. HACS default-store inclusion has not been confirmed. CI runs HACS validation only for public repositories; private repositories still run backend, frontend, hassfest, JSON and Compose checks. Publication metadata checks can still fail before the initial license reaches the default branch.
+HACS requires this GitHub repository to be public. If the repository is private, use the manual installation instructions below.
 
-### Manual
+## Set up the integration
 
-Copy `custom_components/smart_shopping_list` (including `www/`) to your Home Assistant `/config/custom_components/` directory and restart Home Assistant. The generated card is committed, so installation needs no Node.js.
+After restarting, open **Settings → Devices & services → Add integration**, search for **Smart Shopping List**, and complete the setup form.
 
-1. Open **Settings → Devices & services → Add integration → Smart Shopping List** and submit the setup form.
-2. Enable Advanced Mode in your user profile if necessary. Open **Settings → Dashboards → ⋮ → Resources → Add resource**.
-3. Add `/smart_shopping_list/smart-shopping-card.js?v=1.0.0` with resource type **JavaScript module**.
-4. Add a manual card using one of the examples below.
+The integration creates one shared household list. All signed-in Home Assistant users can view and change it, and every Smart Shopping List card uses the same data.
+
+## Register the dashboard card
+
+1. Enable **Advanced Mode** in your Home Assistant user profile if the Resources menu is hidden.
+2. Open **Settings → Dashboards → ⋮ → Resources**.
+3. Select **Add resource** and enter:
+
+   | Setting | Value |
+   | --- | --- |
+   | URL | `/smart_shopping_list/smart-shopping-card.js?v=1.0.0` |
+   | Resource type | **JavaScript module** |
+
+4. Refresh your browser or Home Assistant app.
+
+Register this resource once, even if you use several cards or dashboards.
+
+## Add your first card
+
+Edit a dashboard, select **Add card → Manual**, and paste:
 
 ```yaml
 type: custom:smart-shopping-card
 title: Shopping list
+mode: multi
+```
+
+This starts in **Manage** so you can prepare your list. Tap **Store mode** when you start shopping, then **Back to manage mode** to return.
+
+The selected view applies only to that card. Refreshing the page starts it in Manage again; your shopping items are saved.
+
+## Choose a card mode
+
+| Mode | What it shows |
+| --- | --- |
+| `multi` | Manage and Store views with a button to switch between them. Starts in Manage. |
+| `manage` | Active items with Add Item, Edit quantity and Delete actions. |
+| `store` | Active items with a large Got It button. Purchased items disappear from this view. |
+| `history` | Purchased items with Restore and Clear History actions. |
+
+`title` is optional. If you omit `mode`, the card uses `manage`. Multi mode does not include history; use a separate history card when needed.
+
+For example, you can keep these fixed cards on separate dashboards:
+
+```yaml
+type: custom:smart-shopping-card
+title: Prepare my list
 mode: manage
 ```
 
@@ -40,101 +90,29 @@ title: Purchase history
 mode: history
 ```
 
-For a single card that switches between management and shopping, use:
+All cards stay synchronized. **Got It** keeps the item in history, and **Restore** brings it back to the active list. **Delete** and **Clear History** permanently remove data after confirmation. Clearing history keeps active shopping items.
 
-```yaml
-type: custom:smart-shopping-card
-title: Shopping list
-mode: multi
-```
+## Update through HACS
 
-Multi mode starts in Manage. Tap **Store mode** to shop, then **Back to manage mode** to manage items again. The selected view belongs to that card instance; changing views does not change other cards or devices. Recreating the card (such as refreshing the page) starts in Manage again. Multi mode includes no history view; keep a separate `mode: history` card if needed. Fixed `manage`, `store`, and `history` cards continue working as before and have no mode switch button.
+Download the update in HACS and restart Home Assistant. Then change the resource's query value, for example from `?v=1.0.0` to `?v=2`, and refresh each browser or app to load the updated card. Edit the existing resource rather than adding another copy.
 
-`mode` defaults to `manage`; `title` is optional. The card appears in the card picker and supports the standard YAML editor.
+Your list is stored locally in Home Assistant and persists across restarts. Include your Home Assistant configuration in your regular backups.
 
-Management provides Add Item, quantity-only edits and confirmed permanent deletion. Store mode has a touch-friendly Got It button and removes an item after the server confirms persistence. History retains purchased items and lets you restore them. **Clear History** permanently deletes all purchased items after confirmation, keeps active items, and synchronizes the change across devices. A restored item keeps its original creation time and clears its purchase timestamp. Duplicate names are allowed; UUIDs identify items.
+## Manual installation
 
-## Windows development with Docker Desktop and VS Code
-
-Use Docker Desktop in **Linux containers** mode (WSL2 recommended), start its daemon, and open this repository in VS Code. Run from the repository root in PowerShell:
-
-```powershell
-npm ci
-npm run build
-npm run dev:start
-npm run dev:logs
-```
-
-Visit **http://localhost:8124**, finish Home Assistant onboarding, then follow the integration and resource setup above. Create your own account during onboarding; the repository has no credentials. The container mounts the isolated `dev/ha-config` as `/config`, the integration read-only, and `frontend/dist` read-only as `/config/www/smart-shopping-list`. Port 8124 maps to Home Assistant's 8123. No host networking or privileged container is needed.
-
-```powershell
-npm run dev:stop
-```
-
-`docker compose down` stops and removes the container while retaining the local configuration and shopping data. Runtime state, secrets, authentication, databases, logs, local environment files and dependency folders are ignored by Git. Only the seed `dev/ha-config/configuration.yaml` is tracked. Do not add production credentials to that file.
-
-After frontend edits, run `npm run build`, change the resource query version (for example `?v=dev2`) and refresh every browser/app. In development you may instead register `/local/smart-shopping-list/smart-shopping-card.js?v=dev2`. Register only one resource URL to avoid duplicate module loading. After Python edits, run `docker compose restart homeassistant`. Updating the integration in HACS also requires a restart and browser cache refresh.
-
-## Testing
-
-```powershell
-npm ci
-npm test
-npm run build
-docker compose config --quiet
-```
-
-Backend testing uses real Home Assistant fixtures, including Store persistence and authenticated WebSocket clients. Home Assistant's Python environment is Linux-oriented; use WSL2 or Linux CI with Python 3.14.2+:
-
-```sh
-python3.14 -m venv .venv
-. .venv/bin/activate
-python -m pip install -r requirements-test.txt
-python -m pytest -q
-```
-
-Tests cover mutations, bad inputs, concurrent writes, write rollback, persistence, config flow, restart/reload, subscriptions, two clients, frontend forms, history, failed API calls and cleanup. DOM tests use Happy DOM, not a real Home Assistant browser. For manual acceptance, open manage and store cards on two devices, add an item, edit quantity, purchase, verify history, restore, delete, and restart the container to verify persistence. Check both light/dark themes and a narrow phone viewport. Automated tests do not replace this live check.
-
-## Architecture and API
-
-- `custom_components/smart_shopping_list/`: UI config flow, persistent list, WebSocket API and bundled resource.
-- `frontend/src/`: dependency-free browser module; build copies it into `frontend/dist/` and integration `www/`.
-- `tests/backend/`, `tests/frontend/`: pytest and Node DOM suites.
-- `.github/workflows/`: frontend/backend tests, HACS/hassfest checks, Compose validation and a manually dispatched artifact build.
-
-The singleton integration stores `{items, revision}` using Home Assistant Store version 1 under `.storage/smart_shopping_list`. Each item has UUID `id`, trimmed `name`, positive finite numeric `quantity`, optional `unit`, boolean `purchased`, UTC ISO `created_at` and nullable UTC ISO `purchased_at`. Names allow 1–200 characters; units allow 0–40. Active/history views filter the purchased flag. History has no automatic expiration.
-
-Authenticated Home Assistant users share read/write access to this household list. There are no entity-based per-user permissions, service actions or separate lists. The static JavaScript resource contains no shopping data.
-
-Send operations through Home Assistant's authenticated WebSocket connection:
-
-```javascript
-await hass.callWS({type: 'smart_shopping_list/command', action: 'add', name: 'Milk', quantity: 2, unit: 'L'});
-await hass.callWS({type: 'smart_shopping_list/command', action: 'edit', item_id: id, quantity: 3});
-await hass.callWS({type: 'smart_shopping_list/command', action: 'purchase', item_id: id});
-await hass.callWS({type: 'smart_shopping_list/command', action: 'restore', item_id: id});
-await hass.callWS({type: 'smart_shopping_list/command', action: 'delete', item_id: id});
-await hass.callWS({type: 'smart_shopping_list/command', action: 'get'});
-await hass.callWS({type: 'smart_shopping_list/command', action: 'clear_history'});
-const unsubscribe = await hass.connection.subscribeMessage(snapshot => console.log(snapshot), {
-  type: 'smart_shopping_list/subscribe'
-});
-// Call unsubscribe() when the consumer disconnects.
-```
-
-Commands return a full `{items, revision}` snapshot; subscribe sends one immediately and after every saved mutation. Subscription registration and initial snapshot occur without yielding, avoiding a missed-update window. The frontend ignores older revisions. Home Assistant's connection helper renews subscriptions after transport reconnection. A single async lock serializes read-modify-save operations; atomic storage writes finish before in-memory state and events advance. Failed writes preserve the previous snapshot. A small Store subclass surfaces otherwise logged write failures through its protected `_async_write_data` hook; recheck this hook when upgrading beyond the pinned Home Assistant version. Concurrent edits use last successful write wins; purchase/restore are idempotent. Requests cannot change an item's name or metadata after creation.
-
-## Packaging
-
-Keep the built `custom_components/smart_shopping_list/www/smart-shopping-card.js` committed. `npm run build` must reproduce it exactly. The manual Package workflow creates an installable integration folder ZIP and standalone JS artifact without publishing or pushing. For a release, bump manifest/package versions, rebuild, run CI, create a GitHub release and attach the artifacts. The HACS integration configuration downloads the integration folder directly; the standalone JS can also be manually registered. This repository is configured as a HACS integration, not two independent HACS repository categories.
+Copy the `custom_components/smart_shopping_list` folder, including its `www` folder, into `/config/custom_components/` on your Home Assistant server. Restart Home Assistant, then follow **Set up the integration** and **Register the dashboard card** above.
 
 ## Troubleshooting
 
-- **Integration missing:** verify the domain directory and `manifest.json`, restart Home Assistant, and inspect Settings → System → Logs. The target release is 2026.10.1 or later; older releases may use incompatible schema APIs.
-- **Custom element doesn't exist:** verify the resource is a JavaScript module, its URL loads, the integration is installed, and the cache query was changed. Do not register both bundled and `/local/` resources.
-- **Set up integration first / not loaded:** add or reload the integration, then use Retry connection on the card.
-- **Changes not saving:** check Home Assistant logs and disk permissions/free space. The card reports errors and retains form input for retry.
-- **Docker cannot connect:** start Docker Desktop, switch to Linux containers, and confirm `docker version` shows both client and server. If port 8124 is occupied, stop that process before starting this environment.
-- **Lost data:** stop Home Assistant before restoring `.storage/smart_shopping_list` from a backup. Removing the integration does not deliberately erase the stored list. Do not delete `dev/ha-config` unless you intend to reset the development instance.
+| Problem | What to check |
+| --- | --- |
+| HACS cannot add the repository | Use the repository URL above, select Integration, and confirm the repository is public. |
+| Integration is missing from Add integration | Restart Home Assistant, check your HA version, and look under Settings → System → Logs. |
+| “Custom element doesn't exist: smart-shopping-card” | Check the resource URL and JavaScript module type, then refresh with a new query value. |
+| “Set up Smart Shopping List first” | Add the integration under Devices & services, then select Retry connection on the card. |
+| Old card appearance after an update | Change the resource query value and refresh the browser/app cache. |
+| Items do not save | Check Home Assistant logs, available disk space and storage permissions. The card retains form input after a failed save so you can retry. |
 
-Implementation references: [Home Assistant WebSocket extensions](https://developers.home-assistant.io/docs/frontend/extending/websocket-api), [async static paths](https://developers.home-assistant.io/blog/2024/06/18/async_register_static_paths/), [2026.10.1 source](https://github.com/home-assistant/core/tree/2026.10.1), and [HACS integration packaging](https://www.hacs.dev/docs/publish/integration/).
+For bugs or feature requests, [open an issue](https://github.com/SaleemHGalok/ha-smart-shopping-list/issues). Include your Home Assistant version, card mode and relevant error message; remove credentials from any logs you share.
+
+Contributing? Build instructions, Docker development, tests and API details are in the [development guide](docs/DEVELOPMENT.md).
