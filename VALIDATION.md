@@ -21,3 +21,10 @@ Compatibility note: the durable Store wrapper overrides Home Assistant's protect
 - `npm test`: all 13 frontend tests passed, including confirmation/cancel, preserving active items, failure handling and history-only visibility.
 - `npm run build`: bundled and standalone card rebuilt successfully.
 - Python syntax compilation passed. Added backend persistence, notification, rollback and two-client WebSocket tests; backend pytest remains unrun because the available local environment lacks the required Home Assistant/test dependencies. No additional Python packages were installed for this change.
+
+## Multi mode follow-up
+
+- Added `mode: multi`, defaulting to Manage with Store mode / Back to manage mode buttons. Fixed manage/store/history cards retain their existing behavior.
+- `npm test`: all 17 frontend tests passed, covering switching, API behavior, updates, fixed modes, per-card independence and pending saves.
+- `npm run build` and `node --check frontend/src/smart-shopping-card.js` passed.
+- No Python backend changes. Live Home Assistant/browser validation was not executed for this frontend change.

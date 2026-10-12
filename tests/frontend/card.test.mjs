@@ -129,3 +129,48 @@ test('clear history is not offered in manage or store modes',async()=>{
     assert.equal(card.shadowRoot.querySelector('[data-action="clear-history"]'),null);
   }
 });
+
+test('multi mode defaults to manage and switches back without API calls',async()=>{
+  const {card,calls}=setup('multi');await tick();
+  assert.ok(card.shadowRoot.querySelector('[data-action="add"]'));
+  assert.ok(card.shadowRoot.querySelector('[data-action="edit"]'));
+  assert.equal(card.shadowRoot.querySelector('[data-action="switch-mode"]').textContent,'Store mode');
+  card.shadowRoot.querySelector('[data-action="switch-mode"]').click();
+  assert.equal(card.shadowRoot.querySelector('[data-action="add"]'),null);
+  assert.ok(card.shadowRoot.querySelector('[data-action="purchase"]'));
+  assert.equal(card.shadowRoot.querySelector('[data-action="switch-mode"]').textContent,'Back to manage mode');
+  card.shadowRoot.querySelector('[data-action="switch-mode"]').click();
+  assert.ok(card.shadowRoot.querySelector('[data-action="add"]'));
+  assert.equal(calls.length,0);
+});
+test('multi mode purchase uses the same API and keeps store view on updates',async()=>{
+  const {card,calls,emit}=setup('multi');await tick();
+  card.handle('switch-mode');
+  card.shadowRoot.querySelector('[data-action="purchase"]').click();await tick();
+  assert.equal(calls[0].action,'purchase');assert.equal(card.shadowRoot.querySelector('li'),null);
+  emit({revision:2,items:[item]});card.setConfig({mode:'multi',title:'Groceries'});
+  assert.ok(card.shadowRoot.querySelector('[data-action="purchase"]'));
+  assert.match(card.shadowRoot.querySelector('h2').textContent,/Groceries/);
+  assert.equal(card.shadowRoot.querySelector('[data-action="restore"]'),null);
+  assert.equal(card.shadowRoot.querySelector('[data-action="clear-history"]'),null);
+});
+test('fixed modes have no switch button and multi selection is local',async()=>{
+  for(const mode of ['manage','store','history']) {
+    const {card}=setup(mode);await tick();
+    assert.equal(card.shadowRoot.querySelector('[data-action="switch-mode"]'),null);
+  }
+  const first=setup('multi'),second=setup('multi');await tick();first.card.handle('switch-mode');
+  assert.ok(second.card.shadowRoot.querySelector('[data-action="add"]'));
+  first.card.setConfig({mode:'manage'});first.card.setConfig({mode:'multi'});
+  assert.ok(first.card.shadowRoot.querySelector('[data-action="add"]'));
+});
+test('multi switch is disabled during a pending save',async()=>{
+  const {card}=setup('multi');await tick();
+  let resolve;
+  card._hass.callWS=()=>new Promise(r=>{resolve=r;});
+  const saving=card.command('add',{name:'Bread',quantity:1});
+  assert.equal(card.shadowRoot.querySelector('[data-action="switch-mode"]').disabled,true);
+  card.handle('switch-mode');assert.equal(card.multiMode,'manage');
+  resolve({revision:1,items:[item]});await saving;
+  assert.equal(card.shadowRoot.querySelector('[data-action="switch-mode"]').disabled,false);
+});
