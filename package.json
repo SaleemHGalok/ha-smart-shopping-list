@@ -1,0 +1,16 @@
+{
+  "name": "smart-shopping-list",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node frontend/scripts/build.mjs",
+    "test": "node --test tests/frontend/*.test.mjs",
+    "dev:start": "docker compose up -d",
+    "dev:stop": "docker compose down",
+    "dev:logs": "docker compose logs -f homeassistant"
+  },
+  "devDependencies": {
+    "happy-dom": "^21.0.1"
+  }
+}

@@ -1,0 +1,10 @@
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    ports:
+      - "8124:8123"
+    volumes:
+      - ./dev/ha-config:/config
+      - ./custom_components:/config/custom_components:ro
+      - ./frontend/dist:/config/www/smart-shopping-list:ro
+    restart: unless-stopped

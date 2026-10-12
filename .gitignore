@@ -218,3 +218,21 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Smart Shopping List development
+node_modules/
+.npm-cache/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+frontend/dist/
+dev/ha-config/*
+!dev/ha-config/configuration.yaml
+.env
+*.log
+.tools/
+.python/
+.uv-cache/

@@ -1,0 +1,18 @@
+{
+  "domain": "smart_shopping_list",
+  "name": "Smart Shopping List",
+  "codeowners": [
+    "@SaleemHGalok"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "http",
+    "websocket_api"
+  ],
+  "documentation": "https://github.com/SaleemHGalok/ha-smart-shopping-list",
+  "integration_type": "service",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/SaleemHGalok/ha-smart-shopping-list/issues",
+  "requirements": [],
+  "version": "1.0.0"
+}
