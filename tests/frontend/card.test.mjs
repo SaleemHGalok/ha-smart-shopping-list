@@ -99,3 +99,33 @@ test('late subscription is disposed after card detaches',async()=>{
   document.body.append(card);card.remove();resolve(()=>{disposed=true;});await tick();
   assert.equal(disposed,true);
 });
+
+test('clear history requires confirmation and preserves active items',async()=>{
+  const {card,calls,emit}=setup('history');await tick();
+  assert.equal(card.shadowRoot.querySelector('[data-action="clear-history"]'),null);
+  emit({revision:1,items:[item,{...item,id:'history-item',purchased:true}]});
+  card.shadowRoot.querySelector('[data-action="clear-history"]').click();
+  assert.equal(calls.length,0);assert.match(card.shadowRoot.querySelector('[role="dialog"]').textContent,/cannot be undone/);
+  card.shadowRoot.querySelector('[data-action="cancel"]').click();assert.equal(calls.length,0);
+  card.handle('clear-history');
+  card._hass.callWS=async request=>{calls.push(request);return {revision:2,items:[item]};};
+  card.shadowRoot.querySelector('[data-action="confirm-clear-history"]').click();await tick();
+  assert.deepEqual(calls,[{type:'smart_shopping_list/command',action:'clear_history'}]);
+  assert.deepEqual(card.items,[item]);assert.equal(card.dialog,undefined);
+  assert.equal(card.shadowRoot.querySelector('[data-action="clear-history"]'),null);
+});
+test('failed history clear retains history and allows retry',async()=>{
+  const {card,emit}=setup('history');await tick();
+  emit({revision:1,items:[{...item,purchased:true}]});card.handle('clear-history');
+  card._hass.callWS=async()=>{throw new Error('disk full');};
+  card.shadowRoot.querySelector('[data-action="confirm-clear-history"]').click();await tick();
+  assert.equal(card.items.length,1);assert.equal(card.dialog.action,'clear-history');
+  assert.match(card.shadowRoot.querySelector('[role="dialog"] [role="alert"]').textContent,/disk full/);
+  assert.equal(card.shadowRoot.querySelector('[data-action="confirm-clear-history"]').disabled,false);
+});
+test('clear history is not offered in manage or store modes',async()=>{
+  for(const mode of ['manage','store']) {
+    const {card,emit}=setup(mode);await tick();emit({revision:1,items:[{...item,purchased:true}]});
+    assert.equal(card.shadowRoot.querySelector('[data-action="clear-history"]'),null);
+  }
+});

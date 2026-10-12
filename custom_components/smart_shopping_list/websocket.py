@@ -25,7 +25,7 @@ def subscribe(hass, connection, msg):
 
 @websocket_api.websocket_command({
     probatio.Required("type"): f"{DOMAIN}/command",
-    probatio.Required("action"): probatio.In(["get", "add", "edit", "delete", "purchase", "restore"]),
+    probatio.Required("action"): probatio.In(["get", "add", "edit", "delete", "purchase", "restore", "clear_history"]),
     probatio.Optional("item_id"): str,
     probatio.Optional("name"): str,
     probatio.Optional("quantity"): probatio.Any(int, float),
@@ -39,7 +39,7 @@ async def command(hass, connection, msg):
         return
     action = msg["action"]
     fields = {k: v for k, v in msg.items() if k not in ("id", "type", "action")}
-    expected = {"get": set(), "add": {"name", "quantity", "unit"},
+    expected = {"get": set(), "clear_history": set(), "add": {"name", "quantity", "unit"},
                 "edit": {"item_id", "quantity"}, "delete": {"item_id"},
                 "purchase": {"item_id"}, "restore": {"item_id"}}[action]
     required = expected - ({"unit"} if action == "add" else set())

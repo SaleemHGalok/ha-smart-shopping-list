@@ -101,3 +101,31 @@ async def test_real_store_write_error_does_not_publish(hass):
     assert store.snapshot() == {"items": [], "revision": 0}
     assert events == []
     unsub()
+
+async def test_clear_history_persists_and_notifies(hass):
+    store = ShoppingStore(hass)
+    await store.mutate("add", name="Keep", quantity=1)
+    result = await store.mutate("add", name="Purchased", quantity=2)
+    await store.mutate("purchase", item_id=result["items"][1]["id"])
+    active = store.snapshot()["items"][0]
+    events = []
+    unsub = hass.bus.async_listen(EVENT, lambda event: events.append(event.data))
+    result = await store.mutate("clear_history")
+    await hass.async_block_till_done()
+    assert result["items"] == [active]
+    assert events == [result]
+    reloaded = ShoppingStore(hass)
+    await reloaded.async_load()
+    assert reloaded.snapshot() == result
+    assert await store.mutate("clear_history") == result
+    unsub()
+
+async def test_clear_history_failure_keeps_history(hass):
+    store = ShoppingStore(hass)
+    result = await store.mutate("add", name="Milk", quantity=1)
+    await store.mutate("purchase", item_id=result["items"][0]["id"])
+    before = store.snapshot()
+    store.storage.async_save = AsyncMock(side_effect=OSError("disk full"))
+    with pytest.raises(OSError):
+        await store.mutate("clear_history")
+    assert store.snapshot() == before
