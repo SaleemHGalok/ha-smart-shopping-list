@@ -28,3 +28,10 @@ Compatibility note: the durable Store wrapper overrides Home Assistant's protect
 - `npm test`: all 17 frontend tests passed, covering switching, API behavior, updates, fixed modes, per-card independence and pending saves.
 - `npm run build` and `node --check frontend/src/smart-shopping-card.js` passed.
 - No Python backend changes. Live Home Assistant/browser validation was not executed for this frontend change.
+
+## First GitHub CI failure investigation
+
+- Original PR CI: frontend passed (17 tests and build), hassfest passed, backend reported 22 passed / 1 failed.
+- The failing disk-error regression patched the file writer, but HA's fixture replaces `Store._async_write_data`, so that writer was never called. The test now injects `WriteError` at the fixture boundary, asserts it was awaited, and still verifies DurableStore error propagation, unchanged memory and no event.
+- HACS publication validation cannot read private repositories. It now has a separate public-only CI job; private repository checks continue to run. Added bundled brand icons and publication metadata instructions. Repository visibility remains private at the user's request; HACS installation is still unverified.
+- Description/topics must be configured on GitHub before publication, and the included MIT license must reach the default branch for GitHub's license metadata check.

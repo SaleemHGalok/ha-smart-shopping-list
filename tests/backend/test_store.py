@@ -87,19 +87,23 @@ async def test_purchase_idempotent_and_invalid_unit(hass):
     with pytest.raises(ValueError):
         await store.mutate("add", name="Milk", quantity=1, unit="x" * 41)
 
-async def test_real_store_write_error_does_not_publish(hass):
+async def test_store_write_error_does_not_publish(hass):
     from unittest.mock import patch
     from homeassistant.util.file import WriteError
     from custom_components.smart_shopping_list.store import StorageWriteError
     store = ShoppingStore(hass)
     events = []
     unsub = hass.bus.async_listen(EVENT, lambda event: events.append(event))
-    with patch("homeassistant.helpers.storage.write_utf8_file_atomic", side_effect=WriteError("disk full")):
+    # The hass fixture replaces Store._async_write_data with in-memory storage.
+    # Inject at that boundary so DurableStore and the real async_save error
+    # handling still run; a file-writer patch would never be reached here.
+    with patch("homeassistant.helpers.storage.Store._async_write_data", new_callable=AsyncMock, side_effect=WriteError("disk full")) as write:
         with pytest.raises(StorageWriteError):
             await store.mutate("add", name="Milk", quantity=1)
     await hass.async_block_till_done()
     assert store.snapshot() == {"items": [], "revision": 0}
     assert events == []
+    write.assert_awaited_once()
     unsub()
 
 async def test_clear_history_persists_and_notifies(hass):
