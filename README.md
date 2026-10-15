@@ -92,6 +92,27 @@ mode: history
 
 All cards stay synchronized. **Got It** keeps the item in history, and **Restore** brings it back to the active list. **Delete** and **Clear History** permanently remove data after confirmation. Clearing history keeps active shopping items.
 
+## Show the number of items on your dashboard
+
+The integration adds **Smart Shopping List active items**, normally named `sensor.smart_shopping_list_active_items`. It counts active entries still to buy: milk with quantity 3 counts as one entry. Purchased items are excluded.
+
+Add a Tile card with the entity picker, or use:
+
+```yaml
+type: tile
+entity: sensor.smart_shopping_list_active_items
+name: Items to buy
+icon: mdi:cart
+```
+
+You can also use the sensor in a dashboard badge, template or automation:
+
+```jinja
+{{ states('sensor.smart_shopping_list_active_items') | int(0) }}
+```
+
+The count updates when items are added, deleted, purchased or restored, and loads from your saved list after a restart. Quantity changes do not change the count. After updating an existing installation, restart Home Assistant to create the sensor. If you renamed the entity or Home Assistant assigned another ID, select its actual ID under **Settings → Devices & services → Smart Shopping List → Entities**.
+
 ## Update through HACS
 
 Download the update in HACS and restart Home Assistant. Then change the resource's query value, for example from `?v=1.0.0` to `?v=2`, and refresh each browser or app to load the updated card. Edit the existing resource rather than adding another copy.
